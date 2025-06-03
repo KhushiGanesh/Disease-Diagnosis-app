@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2"></script>
+  <title>Disease Prediction System</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+    }
+    .container {
+      max-width: 700px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .input-area {
+      width: 100%;
+      height: 150px;
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      margin-bottom: 20px;
+    }
+    .result {
+      margin-top: 20px;
+    }
+    ul {
+      padding-left: 20px;
+    }
+    .btn {
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .btn:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  
+  <div class="container">
+    <h1>Disease Prediction System</h1>
+
+    <!-- Form to handle input submission -->
+    <form id="symptomForm">
+      <textarea id="symptomsText" class="input-area" placeholder="Enter your symptoms here, separated by commas."></textarea>
+      <button type="submit" class="btn">Predict Disease</button>
+    </form>
+	<p style="text-align: right;">
+  <a href="signup.html#home" style="
+    background-color: #007BFF;
+    color: white;
+    padding: 10px 16px;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: bold;
+    transition: background-color 0.3s;
+  " onmouseover="this.style.backgroundColor='#0056b3'" onmouseout="this.style.backgroundColor='#007BFF'">
+    Home
+  </a>
+</p>
+	
+    <!-- Result display section -->
+    <div class="result">
+      <h2>Prediction Result</h2>
+      <p><strong>Disease:</strong> <span id="prediction">N/A</span></p>
+      <p><strong>Description:</strong> <span id="description">N/A</span></p>
+      <p><strong>Precautions:</strong></p>
+      <ul id="precautions">
+        <li>N/A</li>
+      </ul>
+      <p style="margin-top: 20px; font-style: italic; color: #555;">
+        <strong>Note:</strong> This prediction is based on a trained machine learning model and dataset. For accurate diagnosis and treatment, please consult a certified medical professional.
+      </p>
+    </div>
+  </div>
+
+  
+<script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2"></script>
+<script>
+  // Known symptoms list
+  const symptomsList = [
+    "abdominal_pain", "abnormal_menstruation", "acidity", "acute_liver_failure", "altered_sensorium", "anxiety", "back_pain",
+    "belly_pain", "blackheads", "bladder_discomfort", "blister", "blood_in_sputum", "bloody_stool", "blurred_and_distorted_vision",
+    "breathlessness", "brittle_nails", "bruising", "burning_micturition", "chest_pain", "chills", "cold_hands_and_feets", "coma",
+    "congestion", "constipation", "continuous_feel_of_urine", "continuous_sneezing", "cough", "cramps", "dark_urine", "dehydration",
+    "depression", "diarrhoea", "dischromic_patches", "distention_of_abdomen", "dizziness", "drying_and_tingling_lips",
+    "enlarged_thyroid", "excessive_hunger", "extra_marital_contacts", "family_history", "fast_heart_rate", "fatigue",
+    "fluid_overload", "foul_smell_of_urine", "headache", "high_fever", "hip_joint_pain", "history_of_alcohol_consumption",
+    "increased_appetite", "indigestion", "inflammatory_nails", "internal_itching", "irregular_sugar_level", "irritability",
+    "irritation_in_anus", "itching", "joint_pain", "knee_pain", "lack_of_concentration", "lethargy", "loss_of_appetite",
+    "loss_of_balance", "loss_of_smell", "malaise", "mild_fever", "mood_swings", "movement_stiffness", "mucoid_sputum",
+    "muscle_pain", "muscle_wasting", "muscle_weakness", "nausea", "neck_pain", "nodal_skin_eruptions", "obesity",
+    "pain_behind_the_eyes", "pain_during_bowel_movements", "pain_in_anal_region", "painful_walking", "palpitations",
+    "passage_of_gases", "patches_in_throat", "phlegm", "polyuria", "prominent_veins_on_calf", "puffy_face_and_eyes",
+    "pus_filled_pimples", "receiving_blood_transfusion", "receiving_unsterile_injections", "red_sore_around_nose",
+    "red_spots_over_body", "redness_of_eyes", "restlessness", "runny_nose", "rusty_sputum", "scurring", "shivering",
+    "silver_like_dusting", "sinus_pressure", "skin_peeling", "skin_rash", "slurred_speech", "small_dents_in_nails",
+    "spinning_movements", "spotting_urination", "stiff_neck", "stomach_bleeding", "stomach_pain", "sunken_eyes",
+    "sweating", "swelled_lymph_nodes", "swelling_joints", "swelling_of_stomach", "swollen_blood_vessels",
+    "swollen_extremeties", "swollen_legs", "throat_irritation", "toxic_look_(typhos)", "ulcers_on_tongue",
+    "unsteadiness", "visual_disturbances", "vomiting", "watering_from_eyes", "weakness_in_limbs",
+    "weakness_of_one_body_side", "weight_gain", "weight_loss", "yellow_crust_ooze", "yellow_urine",
+    "yellowing_of_eyes", "yellowish_skin"
+  ];
+
+  // Create Fuse instance
+  const fuse = new Fuse(symptomsList, {
+    includeScore: true,           // Include score to filter out poor matches
+    threshold: 0.3,               // Looser threshold for better fuzzy matches (adjust as needed)
+    minMatchCharLength: 2,        // Only search terms that are at least 2 characters long
+  });
+
+  // Event listener for symptom form submission
+  document.getElementById("symptomForm").addEventListener("submit", (event) => {
+    event.preventDefault();
+
+    // Get input text and clean up the text (remove punctuation, lowercase, etc.)
+    const inputText = document.getElementById("symptomsText").value.toLowerCase().replace(/[.]/g, "");
+    const inputWords = inputText.split(/[\s,]+/).filter(w => w);
+
+    // Prepare a set to store matched symptoms
+    const matchedSymptoms = new Set();
+
+    // Iterate through each word, two-word and three-word combinations
+    for (let i = 0; i < inputWords.length; i++) {
+      const oneWord = inputWords[i];
+      const twoWords = oneWord + " " + (inputWords[i + 1] || "");
+      const threeWords = twoWords + " " + (inputWords[i + 2] || "");
+
+      // Search Fuse.js with these combinations
+      [oneWord, twoWords, threeWords].forEach(term => {
+        const result = fuse.search(term);
+        if (result.length > 0 && result[0].score < 0.4) {  // match if score is good
+          matchedSymptoms.add(result[0].item);
+        }
+      });
+    }
+
+    const symptomsArray = Array.from(matchedSymptoms);
+
+    // If no symptoms were matched, alert the user
+    if (symptomsArray.length === 0) {
+      alert("No valid symptoms found! Please try again.");
+      return;
+    }
+
+    // Send the matched symptoms to the API
+    fetch("http://localhost:5000/predict", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ symptoms: symptomsArray })
+    })
+      .then(response => response.json())
+      .then(data => {
+        // Display prediction and description from the response
+        document.getElementById("prediction").innerText = data.prediction || "N/A";
+        document.getElementById("description").innerText = data.description || "N/A";
+
+        // Show precautions in a list
+        const precautionsEl = document.getElementById("precautions");
+        precautionsEl.innerHTML = "";
+
+        if (Array.isArray(data.precautions)) {
+          data.precautions.forEach(p => {
+            precautionsEl.innerHTML += `<li>${p}</li>`;
+          });
+        } else {
+          precautionsEl.innerHTML = "<li>N/A</li>";
+        }
+      })
+      .catch(error => {
+        console.error("Error:", error);
+        alert("Something went wrong. Check console for details.");
+      });
+  });
+</script>
+
+
+</body>
+</html>

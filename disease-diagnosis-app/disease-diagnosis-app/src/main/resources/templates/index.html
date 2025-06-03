@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Disease Predictor</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+    }
+    .container {
+      max-width: 700px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .symptoms {
+      max-height: 300px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      padding: 10px;
+      margin-bottom: 20px;
+    }
+    .symptoms label {
+      display: block;
+      margin-bottom: 5px;
+    }
+    .result {
+      margin-top: 20px;
+    }
+    ul {
+      padding-left: 20px;
+    }
+    .btn {
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .btn:hover {
+      background-color: #0056b3;
+    }
+    #searchBox {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Disease Prediction System</h1>
+    <input type="text" id="searchBox" placeholder="Search symptoms...">
+    <div class="symptoms" id="symptomList"></div>
+    <button class="btn" id="predictBtn">Predict Disease</button>
+    <p style="text-align: right;">
+  <a href="signup.html#home" style="
+    background-color: #007BFF;
+    color: white;
+    padding: 10px 16px;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: bold;
+    transition: background-color 0.3s;
+  " onmouseover="this.style.backgroundColor='#0056b3'" onmouseout="this.style.backgroundColor='#007BFF'">
+    Home
+  </a>
+</p>
+    
+    <div class="result">
+      <h2>Prediction Result</h2>
+      <p><strong>Disease:</strong> <span id="prediction"></span></p>
+      <p><strong>Description:</strong> <span id="description"></span></p>
+      <p><strong>Precautions:</strong></p>
+      <ul id="precautions"></ul>
+          <p style="margin-top: 20px; font-style: italic; color: #555;">
+        <strong>Note:</strong> This prediction is based on a trained machine learning model and dataset. For accurate diagnosis and treatment, please consult a certified medical professional.
+    	</p>
+    </div>
+  </div>
+
+  <script>
+    // Symptoms from your dataset
+    const symptoms = [
+      "abdominal_pain", "abnormal_menstruation", "acidity", "acute_liver_failure", "altered_sensorium", "anxiety", "back_pain",
+      "belly_pain", "blackheads", "bladder_discomfort", "blister", "blood_in_sputum", "bloody_stool", "blurred_and_distorted_vision",
+      "breathlessness", "brittle_nails", "bruising", "burning_micturition", "chest_pain", "chills", "cold_hands_and_feets", "coma",
+      "congestion", "constipation", "continuous_feel_of_urine", "continuous_sneezing", "cough", "cramps", "dark_urine", "dehydration",
+      "depression", "diarrhoea", "dischromic _patches", "distention_of_abdomen", "dizziness", "drying_and_tingling_lips",
+      "enlarged_thyroid", "excessive_hunger", "extra_marital_contacts", "family_history", "fast_heart_rate", "fatigue",
+      "fluid_overload", "foul_smell_of urine", "headache", "high_fever", "hip_joint_pain", "history_of_alcohol_consumption",
+      "increased_appetite", "indigestion", "inflammatory_nails", "internal_itching", "irregular_sugar_level", "irritability",
+      "irritation_in_anus", "itching", "joint_pain", "knee_pain", "lack_of_concentration", "lethargy", "loss_of_appetite",
+      "loss_of_balance", "loss_of_smell", "malaise", "mild_fever", "mood_swings", "movement_stiffness", "mucoid_sputum",
+      "muscle_pain", "muscle_wasting", "muscle_weakness", "nausea", "neck_pain", "nodal_skin_eruptions", "obesity",
+      "pain_behind_the_eyes", "pain_during_bowel_movements", "pain_in_anal_region", "painful_walking", "palpitations",
+      "passage_of_gases", "patches_in_throat", "phlegm", "polyuria", "prominent_veins_on_calf", "puffy_face_and_eyes",
+      "pus_filled_pimples", "receiving_blood_transfusion", "receiving_unsterile_injections", "red_sore_around_nose",
+      "red_spots_over_body", "redness_of_eyes", "restlessness", "runny_nose", "rusty_sputum", "scurring", "shivering",
+      "silver_like_dusting", "sinus_pressure", "skin_peeling", "skin_rash", "slurred_speech", "small_dents_in_nails",
+      "spinning_movements", "spotting_ urination", "stiff_neck", "stomach_bleeding", "stomach_pain", "sunken_eyes",
+      "sweating", "swelled_lymph_nodes", "swelling_joints", "swelling_of_stomach", "swollen_blood_vessels",
+      "swollen_extremeties", "swollen_legs", "throat_irritation", "toxic_look_(typhos)", "ulcers_on_tongue",
+      "unsteadiness", "visual_disturbances", "vomiting", "watering_from_eyes", "weakness_in_limbs",
+      "weakness_of_one_body_side", "weight_gain", "weight_loss", "yellow_crust_ooze", "yellow_urine",
+      "yellowing_of_eyes", "yellowish_skin"
+    ];
+
+    function renderSymptoms(filter = "") {
+      const container = document.getElementById("symptomList");
+      container.innerHTML = "";
+      const filtered = symptoms.filter(symptom => symptom.toLowerCase().includes(filter.toLowerCase()));
+      filtered.forEach(symptom => {
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.name = "symptoms";
+        checkbox.value = symptom;
+
+        const label = document.createElement("label");
+        label.appendChild(checkbox);
+        label.appendChild(document.createTextNode(" " + symptom.replaceAll("_", " ")));
+
+        container.appendChild(label);
+      });
+    }
+
+    document.getElementById("searchBox").addEventListener("input", (e) => {
+      renderSymptoms(e.target.value);
+    });
+
+    document.getElementById("predictBtn").addEventListener("click", () => {
+      const selectedSymptoms = [];
+      document.querySelectorAll("input[name='symptoms']:checked").forEach((checkbox) => {
+        selectedSymptoms.push(checkbox.value);
+      });
+
+      fetch("http://localhost:5000/predict", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ symptoms: selectedSymptoms })
+      })
+        .then(response => response.json())
+        .then(data => {
+          document.getElementById("prediction").innerText = data.prediction || "N/A";
+          document.getElementById("description").innerText = data.description || "N/A";
+          const precautionsEl = document.getElementById("precautions");
+          precautionsEl.innerHTML = "";
+
+          if (Array.isArray(data.precautions)) {
+            data.precautions.forEach(p => {
+              precautionsEl.innerHTML += `<li>${p}</li>`;
+            });
+          } else {
+            precautionsEl.innerHTML = "<li>N/A</li>";
+          }
+        })
+        .catch(error => {
+          console.error("Error:", error);
+          alert("Something went wrong. Check console for details.");
+        });
+    });
+
+    // Initial load
+    renderSymptoms();
+  </script>
+</body>
+</html>
